@@ -26,10 +26,10 @@ qsort xs = case uncons xs of
     in
       qsort small <> mid <> [head] <> qsort large
 
-qsort' :: ∀ a. Ord a => Array a -> Array a
+qsort' :: forall a. Ord a => Array a -> Array a
 qsort' = qsortBy compare
 
-qsortBy :: ∀ a. (a -> a -> Ordering) -> Array a -> Array a
+qsortBy :: forall a. (a -> a -> Ordering) -> Array a -> Array a
 qsortBy cmp xs = case uncons xs of
   Nothing -> []
   Just { head, tail } ->
@@ -60,7 +60,7 @@ foreign import length :: forall h a. STArray h a -> Int
 -- WARNING ST.run with $ causes an error
 -- https://github.com/purescript/documentation/blob/master/errors/EscapedSkolem.md
 
-mutableQSortBy :: ∀ a. (a -> a -> Ordering) -> Array a -> Array a
+mutableQSortBy :: forall a. (a -> a -> Ordering) -> Array a -> Array a
 mutableQSortBy cmp inmutableArr = run (withArray mutableComputation inmutableArr) where
 
   mutableComputation :: forall h. STArray h a -> ST h Unit
@@ -134,7 +134,7 @@ mutableQSortBy cmp inmutableArr = run (withArray mutableComputation inmutableArr
 
           pure unit
 
-mutableQSortBy2 :: ∀ a. (a -> a -> Ordering) -> Array a -> Array a
+mutableQSortBy2 :: forall a. (a -> a -> Ordering) -> Array a -> Array a
 mutableQSortBy2 cmp inmutableArr = run (withArray mutableComputation inmutableArr) where
 
   mutableComputation :: forall h. STArray h a -> ST h Unit
