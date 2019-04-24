@@ -48,8 +48,6 @@ inc :: Int -> Int
 inc = add 1
 
 
-
-
 foreign import length :: forall h a. STArray h a -> Int
 -- withArray :: forall h a b. (STArray h a -> ST h b) -> Array a -> ST h (Array a)
 
@@ -62,80 +60,6 @@ foreign import length :: forall h a. STArray h a -> Int
 
 mutableQSortBy :: forall a. (a -> a -> Ordering) -> Array a -> Array a
 mutableQSortBy cmp inmutableArr = run (withArray mutableComputation inmutableArr) where
-
-  mutableComputation :: forall h. STArray h a -> ST h Unit
-  mutableComputation arr = sort 0 (length arr - 1) where
-    swap :: Int -> Int -> ST h Unit
-    swap i j = do
-      -- Read both values
-      maybeArrI <- peek i arr
-      maybeArrJ <- peek j arr
-      -- And try to write the values in the other index
-      _ <- case maybeArrI of
-        Just arrI -> poke j arrI arr
-        Nothing -> pure false
-      _ <- case maybeArrJ of
-        Just arrJ -> poke i arrJ arr
-        Nothing -> pure false
-      pure unit
-
-    cmpM :: Int -> Int -> ST h Ordering
-    cmpM i j =  do
-      -- Read both values
-      maybeArrI <- peek i arr
-      maybeArrJ <- peek j arr
-      -- peek j arr
-      -- pure maybeArrI
-      pure $ unsafePartial $ fromJust $ cmp <$> maybeArrI <*> maybeArrJ
-
-    sort :: Int -> Int -> ST h Unit
-    sort maxLeft minRight =
-      if (minRight - maxLeft <= 1)
-        then pure unit
-        else do
-          -- Create mutable indexes
-          iPivot  <- Ref.new maxLeft
-          iLeft  <- Ref.new maxLeft
-          iRight <- Ref.new minRight
-
-          while
-            -- while condition
-            do
-              left <- Ref.read iLeft
-              right <- Ref.read iRight
-
-              pure $ right > left
-
-            -- while computation
-            $ do
-                left <- Ref.read iLeft
-                right <- Ref.read iRight
-                pivot <- Ref.read iPivot
-
-                if (pivot == left)
-                  then do
-                    comparison <- cmpM pivot right
-                    if (comparison == LT || comparison == EQ)
-                      then Ref.modify dec iRight
-                      else do
-                        swap pivot right
-                        Ref.write right iPivot
-                  else do
-                    comparison <- cmpM pivot left
-                    if (comparison == GT || comparison == EQ)
-                      then Ref.modify inc iLeft
-                      else do
-                        swap pivot left
-                        Ref.write left iPivot
-
-          pivot <- Ref.read iPivot
-          sort maxLeft (pivot - 1)
-          sort (pivot + 1) minRight
-
-          pure unit
-
-mutableQSortBy2 :: forall a. (a -> a -> Ordering) -> Array a -> Array a
-mutableQSortBy2 cmp inmutableArr = run (withArray mutableComputation inmutableArr) where
 
   mutableComputation :: forall h. STArray h a -> ST h Unit
   mutableComputation arr = sort 0 (length arr - 1) where

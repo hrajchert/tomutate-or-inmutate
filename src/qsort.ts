@@ -7,9 +7,9 @@ function qsort (arr: ReadonlyArray<number>): ReadonlyArray<number> {
 
     const [head, ...tail] = arr;
 
-    const small = tail.filter(x => x < head);
+    const small = tail.filter(x => x <  head);
     const mid   = tail.filter(x => x == head);
-    const large = tail.filter(x => x > head);
+    const large = tail.filter(x => x >  head);
     return [...qsort(small), ...mid, head, ...qsort(large)];
 }
 
