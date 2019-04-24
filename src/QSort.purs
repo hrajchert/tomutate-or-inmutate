@@ -6,7 +6,7 @@ import Control.Monad.ST.Ref (STRef, modify, modify')
 import Control.Monad.ST.Ref as Ref
 import Data.Array.ST (withArray, STArray, peek, poke)
 import Data.Array.ST.Partial as ArraySTP
-import Data.Array as Array
+import Data.Array (filter, uncons)
 import Data.Maybe (Maybe(..), fromJust)
 import Data.Ord (class Ord, compare)
 import Data.Ordering (Ordering(..), invert)
@@ -16,13 +16,13 @@ import Partial.Unsafe (unsafePartial)
 import Debug.Trace
 
 qsort :: Array Int -> Array Int
-qsort xs = case Array.uncons xs of
+qsort xs = case uncons xs of
   Nothing -> []
   Just { head, tail } ->
     let
-      small = Array.filter (\x -> x < head)  tail
-      mid   = Array.filter (\x -> x == head) tail
-      large = Array.filter (\x -> x > head)  tail
+      small = filter (\x -> x < head)  tail
+      mid   = filter (\x -> x == head) tail
+      large = filter (\x -> x > head)  tail
     in
       qsort small <> mid <> [head] <> qsort large
 
@@ -30,13 +30,13 @@ qsort' :: ∀ a. Ord a => Array a -> Array a
 qsort' = qsortBy compare
 
 qsortBy :: ∀ a. (a -> a -> Ordering) -> Array a -> Array a
-qsortBy cmp xs = case Array.uncons xs of
+qsortBy cmp xs = case uncons xs of
   Nothing -> []
   Just { head, tail } ->
     let
-      small = Array.filter (\x -> (cmp x head) == LT) tail
-      mid   = Array.filter (\x -> (cmp x head) == EQ) tail
-      large = Array.filter (\x -> (cmp x head) == GT) tail
+      small = filter (\x -> (cmp x head) == LT) tail
+      mid   = filter (\x -> (cmp x head) == EQ) tail
+      large = filter (\x -> (cmp x head) == GT) tail
     in
       qsortBy cmp small <> mid <> [head] <> qsortBy cmp large
 
