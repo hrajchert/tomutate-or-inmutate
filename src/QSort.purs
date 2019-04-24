@@ -8,7 +8,6 @@ import Data.Array.ST (STArray, withArray)
 import Data.Array.ST.Partial as ArraySTP
 import Data.Array (filter, uncons)
 import Data.Maybe (Maybe(..))
--- import Data.Ord (class Ord, compare)
 import Data.Ordering (invert)
 import Partial.Unsafe (unsafePartial)
 
@@ -38,11 +37,6 @@ qsortBy cmp xs = case uncons xs of
       qsortBy cmp small <> mid <> [head] <> qsortBy cmp large
 
 
-dec :: Int -> Int
-dec n = n - 1
-
-inc :: Int -> Int
-inc = add 1
 
 
 foreign import length :: forall h a. STArray h a -> Int
@@ -75,6 +69,12 @@ mutableQSortBy cmp inmutableArr = run (withArray mutableComputation inmutableArr
       arrI <- unsafePartial $ ArraySTP.peek i arr
       arrJ <- unsafePartial $ ArraySTP.peek j arr
       pure $ cmp arrI arrJ
+
+    dec :: Int -> Int
+    dec n = n - 1
+
+    inc :: Int -> Int
+    inc n = n + 1
 
     sort :: Int -> Int -> ST h Unit
     sort maxLeft minRight =
