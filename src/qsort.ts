@@ -32,11 +32,7 @@ function mutableQSortBy<T> (cmp: (a: T, b: T) => Ordering, arr: ReadonlyArray<T>
         arr[j] = arr[i];
         arr[i] = temp;
     }
-    function sort(maxLeft: number, minRight: number, arr: Array<T>): Array<T> {
-        if (minRight - maxLeft <= 1) {
-            return arr;
-        }
-
+    function partition(maxLeft: number, minRight: number, arr: Array<T>): number {
         let iPivot = maxLeft;
         let iLeft = maxLeft;
         let iRight = minRight;
@@ -60,8 +56,78 @@ function mutableQSortBy<T> (cmp: (a: T, b: T) => Ordering, arr: ReadonlyArray<T>
                 }
             }
         }
+        return iPivot;
+    }
+    function sort(maxLeft: number, minRight: number, arr: Array<T>): Array<T> {
+        if (minRight - maxLeft <= 1) {
+            return arr;
+        }
+
+        const iPivot = partition(maxLeft, minRight, arr);
+
         sort(maxLeft, iPivot - 1, arr);
-        return sort(iPivot + 1, minRight, arr);
+        sort(iPivot + 1, minRight, arr);
+        return arr;
+    }
+
+    return sort(0, arr.length - 1, arr.slice(0));
+}
+
+/**
+ * QSort algorithm with mutable array and Tail Call Optimization
+ */
+function mutableTOQSortBy<T> (cmp: (a: T, b: T) => Ordering, arr: ReadonlyArray<T>): ReadonlyArray<T> {
+    function swap(arr: Array<T>, i: number, j: number) {
+        const temp = arr[j];
+        arr[j] = arr[i];
+        arr[i] = temp;
+    }
+    function partition(maxLeft: number, minRight: number, arr: Array<T>): number {
+        let iPivot = maxLeft;
+        let iLeft = maxLeft;
+        let iRight = minRight;
+
+        while (iRight > iLeft) {
+            if (iPivot === iLeft) {
+                const comparison = cmp(arr[iPivot], arr[iRight]);
+                if (comparison === 'LT' || comparison === 'EQ') {
+                    iRight--;
+                } else {
+                    swap(arr, iPivot, iRight);
+                    iPivot = iRight;
+                }
+            } else {
+                const comparison = cmp(arr[iPivot], arr[iLeft]);
+                if (comparison === 'GT' || comparison === 'EQ') {
+                    iLeft++;
+                } else {
+                    swap(arr, iPivot, iLeft);
+                    iPivot = iLeft;
+                }
+            }
+        }
+        return iPivot;
+    }
+
+    function sort(maxLeft: number, minRight: number, arr: Array<T>): Array<T> {
+        let iLeft = maxLeft;
+        let iRight = minRight;
+        while (iLeft < iRight) {
+            const iPivot = partition(iLeft, minRight, arr);
+             // If left part is smaller, then recur for left
+            // part and handle right part iteratively
+            if (iPivot - iLeft < iRight - iPivot) {
+                sort(iLeft, iPivot - 1, arr);
+                iLeft = iPivot + 1;
+            }
+            // Else recur for right part
+            else {
+                sort(iPivot + 1, iRight, arr);
+                iRight = iPivot - 1;
+            }
+        }
+        return arr;
+
     }
 
     return sort(0, arr.length - 1, arr.slice(0));
@@ -98,10 +164,9 @@ function createRandomArray(n: number) {
     return result;
 }
 
-const REPEAT_TIMES = 50;
 
-function performanceTest(n: number, name: string, sortFn: SortFunction<number>, cmp: CmpFunction<number>) {
-    for (let i = 0; i < REPEAT_TIMES ; i++) {
+function performanceTest(n: number, iterations: number, name: string, sortFn: SortFunction<number>, cmp: CmpFunction<number>) {
+    for (let i = 0; i < iterations ; i++) {
         const arr = createRandomArray(n);
 
         performance.mark(`${name} - start`);
@@ -110,10 +175,11 @@ function performanceTest(n: number, name: string, sortFn: SortFunction<number>, 
         performance.measure(name, `${name} - start`, `${name} - end`);
     }
     const measures = performance.getEntriesByName(name);
-    const avg = measures
+    const sum = measures
         .map(entry => entry.duration)
-        .reduce((accu, duration) => accu + duration / REPEAT_TIMES, 0)
-
+        .reduce((accu, duration) => accu + duration, 0)
+    ;
+    const avg = sum / iterations;
     console.log(`${name} :: N ${n} :: avg = ${avg}ms`);
 
     performance.clearMarks();
