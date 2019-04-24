@@ -1,19 +1,16 @@
 module QSort where
-import Prelude
+import Prelude (class Ord, Ordering(..), Unit, add, bind, compare, discard, otherwise, pure, show, unit, ($), (+), (-), (<), (<$>), (<*>), (<=), (<>), (==), (>), (||))
 
 import Control.Monad.ST (run, ST, for, while)
-import Control.Monad.ST.Ref (STRef, modify, modify')
+import Control.Monad.ST.Ref (modify)
 import Control.Monad.ST.Ref as Ref
-import Data.Array.ST (withArray, STArray, peek, poke)
+import Data.Array.ST (STArray, withArray)
 import Data.Array.ST.Partial as ArraySTP
 import Data.Array (filter, uncons)
-import Data.Maybe (Maybe(..), fromJust)
-import Data.Ord (class Ord, compare)
-import Data.Ordering (Ordering(..), invert)
-import Effect (Effect)
-import Effect.Console (log)
+import Data.Maybe (Maybe(..))
+-- import Data.Ord (class Ord, compare)
+import Data.Ordering (invert)
 import Partial.Unsafe (unsafePartial)
-import Debug.Trace
 
 qsort :: Array Int -> Array Int
 qsort xs = case uncons xs of
