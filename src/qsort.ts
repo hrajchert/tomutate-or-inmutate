@@ -1,5 +1,9 @@
 
-
+/**
+ * Recursive inmutable implementation of the Quick Sort algorithm fixed for numbers
+ * @param arr The array to sort
+ * @returns The sorted array
+ */
 function qsort (arr: ReadonlyArray<number>): ReadonlyArray<number> {
     if (arr.length === 0) {
         return [];
@@ -13,6 +17,11 @@ function qsort (arr: ReadonlyArray<number>): ReadonlyArray<number> {
     return [...qsort(small), ...mid, head, ...qsort(large)];
 }
 
+/**
+ *
+ * @param cmp
+ * @param arr
+ */
 function qsortBy <T>(cmp: (a: T, b: T) => Ordering, arr: ReadonlyArray<T>): ReadonlyArray<T> {
     if (arr.length === 0) {
         return [];
@@ -165,27 +174,33 @@ function createRandomArray(n: number) {
 }
 
 
-function performanceTest(n: number, iterations: number, name: string, sortFn: SortFunction<number>, cmp: CmpFunction<number>) {
-    for (let i = 0; i < iterations ; i++) {
-        const arr = createRandomArray(n);
+function performanceTest(arrayLength: number, samples: number, name: string, sortFn: SortFunction<number>, cmp: CmpFunction<number>) {
+    // perform the test many times (samples times) and get the average duration
+    function getAvgDuration(startMark: string, endMark: string) {
+        for (let i = 0; i < samples ; i++) {
+            const arr = createRandomArray(arrayLength);
 
-        performance.mark(`${name} - start`);
-        sortFn(cmp, arr);
-        performance.mark(`${name} - end`);
-        performance.measure(name, `${name} - start`, `${name} - end`);
+            performance.mark(startMark);
+            sortFn(cmp, arr);
+            performance.mark(endMark);
+            performance.measure(name, startMark, endMark);
+        }
+        const measures = performance.getEntriesByName(name);
+        const sum = measures
+            .map(entry => entry.duration)
+            .reduce((accu, duration) => accu + duration, 0)
+        ;
+        return sum / samples;
     }
-    const measures = performance.getEntriesByName(name);
-    const sum = measures
-        .map(entry => entry.duration)
-        .reduce((accu, duration) => accu + duration, 0)
-    ;
-    const avg = sum / iterations;
-    console.log(`${name} :: N ${n} :: avg = ${avg}ms`);
+
+    performance.mark('Performance test start');
+    const avg = getAvgDuration(`${name} - start`, `${name} - end`);
+    performance.mark('Performance test end');
+    performance.measure('Total time', 'Performance test start', 'Performance test end');
+    const totalTime = performance.getEntriesByName('Total time')[0].duration;
+
+    console.log(`${name} :: N ${arrayLength} :: avg = ${avg}ms :: total time = ${totalTime}ms`);
 
     performance.clearMarks();
     performance.clearMeasures();
 }
-
-// performanceTest(1000, "Mutable qsort", mutableQSortBy, cmpNumberAsc);
-// performanceTest(1000, "Inmutable qsort", qsortBy, cmpNumberAsc);
-
