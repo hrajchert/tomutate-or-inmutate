@@ -1,5 +1,5 @@
 module QSort where
-import Prelude (class Ord, Ordering(..), Unit, add, bind, compare, discard, otherwise, pure, show, unit, ($), (+), (-), (<), (<$>), (<*>), (<=), (<>), (==), (>), (||))
+import Prelude
 
 import Control.Monad.ST (run, ST, for, while)
 import Control.Monad.ST.Ref (modify)
@@ -63,13 +63,6 @@ mutableQSortBy cmp inmutableArr = run (withArray mutableComputation inmutableArr
       unsafePartial $ ArraySTP.poke j arrI arr
       unsafePartial $ ArraySTP.poke i arrJ arr
 
-    cmpM :: Int -> Int -> ST h Ordering
-    cmpM i j = do
-      -- Read both values
-      arrI <- unsafePartial $ ArraySTP.peek i arr
-      arrJ <- unsafePartial $ ArraySTP.peek j arr
-      pure $ cmp arrI arrJ
-
     dec :: Int -> Int
     dec n = n - 1
 
@@ -77,50 +70,48 @@ mutableQSortBy cmp inmutableArr = run (withArray mutableComputation inmutableArr
     inc n = n + 1
 
     sort :: Int -> Int -> ST h Unit
-    sort maxLeft minRight =
-      if (minRight - maxLeft <= 1)
+    sort low high =
+      if (low >= high)
         then pure unit
         else do
-          -- Create mutable indexes
-          iPivot  <- Ref.new maxLeft
-          iLeft  <- Ref.new maxLeft
-          iRight <- Ref.new minRight
-
-          while
-            -- while condition
-            do
-              left <- Ref.read iLeft
-              right <- Ref.read iRight
-
-              pure $ right > left
-
-            -- while computation
-            $ do
-                left <- Ref.read iLeft
-                right <- Ref.read iRight
-                pivot <- Ref.read iPivot
-
-                if (pivot == left)
-                  then do
-                    comparison <- cmpM pivot right
-                    if (comparison == LT || comparison == EQ)
-                      then Ref.modify dec iRight
-                      else do
-                        swap pivot right
-                        Ref.write right iPivot
-                  else do
-                    comparison <- cmpM pivot left
-                    if (comparison == GT || comparison == EQ)
-                      then Ref.modify inc iLeft
-                      else do
-                        swap pivot left
-                        Ref.write left iPivot
-
-          pivot <- Ref.read iPivot
-          sort maxLeft (pivot - 1)
-          sort (pivot + 1) minRight
-
+          pivot <- partition low high
+          sort low (pivot - 1)
+          sort (pivot + 1) high
           pure unit
+
+    partition :: Int -> Int -> ST h Int
+    partition low high =
+      do
+        -- Select the pivot
+        pivot <- unsafePartial $ ArraySTP.peek high arr
+
+        -- Create mutable indexes
+        iRef <- Ref.new (low - 1)
+        jRef <- Ref.new low
+
+        while
+          -- while condition
+          do
+            j <- Ref.read jRef
+            pure $ j <= (high - 1)
+
+          -- while computation
+          $ do
+              j <- Ref.read jRef
+              arrJ <- unsafePartial $ ArraySTP.peek j arr
+              comparison <- pure $ cmp arrJ pivot
+
+              if (comparison == LT || comparison == EQ)
+                then do
+                  i <- Ref.modify inc iRef
+                  swap i j
+                else pure unit
+
+              Ref.modify inc jRef
+
+        i <- Ref.read iRef
+        swap (i + 1) high
+        pure (i + 1)
 
 mutable1 :: Int
 mutable1 = run do
