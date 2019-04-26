@@ -35,47 +35,46 @@ function qsortBy <T>(cmp: (a: T, b: T) => Ordering, arr: ReadonlyArray<T>): Read
     return [...qsortBy(cmp, small), ...mid, head, ...qsortBy(cmp, large)];
 }
 
-function mutableQSortBy<T> (cmp: (a: T, b: T) => Ordering, arr: ReadonlyArray<T>): ReadonlyArray<T> {
-    function swap(arr: Array<T>, i: number, j: number) {
-        const temp = arr[j];
-        arr[j] = arr[i];
-        arr[i] = temp;
-    }
-    function partition(maxLeft: number, minRight: number, arr: Array<T>): number {
-        let iPivot = maxLeft;
-        let iLeft = maxLeft;
-        let iRight = minRight;
+function swap<T>(i: number, j: number, arr: Array<T>) {
+    const temp = arr[j];
+    arr[j] = arr[i];
+    arr[i] = temp;
+}
 
-        while (iRight > iLeft) {
-            if (iPivot === iLeft) {
-                const comparison = cmp(arr[iPivot], arr[iRight]);
-                if (comparison === 'LT' || comparison === 'EQ') {
-                    iRight--;
-                } else {
-                    swap(arr, iPivot, iRight);
-                    iPivot = iRight;
-                }
-            } else {
-                const comparison = cmp(arr[iPivot], arr[iLeft]);
-                if (comparison === 'GT' || comparison === 'EQ') {
-                    iLeft++;
-                } else {
-                    swap(arr, iPivot, iLeft);
-                    iPivot = iLeft;
-                }
-            }
+function partition<T>(low: number, high: number, cmp: (a: T, b: T) => Ordering, arr: Array<T>): number {
+    // Select the pivot
+    const pivot = arr[high];
+    let i = low - 1;
+
+    for (let j = low; j <= high - 1; j++) {
+        // If current element is smaller than or
+        // equal to pivot
+        const comparison = cmp(arr[j], pivot);
+        if (comparison === 'LT' || comparison === 'EQ') {
+            // increment index of smaller element and swap
+            i++;
+            swap(i, j, arr);
         }
-        return iPivot;
     }
-    function sort(maxLeft: number, minRight: number, arr: Array<T>): Array<T> {
-        if (minRight - maxLeft <= 1) {
+    // Finally swap the pivot
+    swap(i + 1, high, arr);
+    // And return it's position
+    return (i + 1);
+}
+
+/**
+ * reference: https://www.geeksforgeeks.org/quick-sort/
+ */
+function mutableQSortBy<T> (cmp: (a: T, b: T) => Ordering, arr: ReadonlyArray<T>): ReadonlyArray<T> {
+    function sort(low: number, high: number, arr: Array<T>): Array<T> {
+        if (low >= high) {
             return arr;
         }
 
-        const iPivot = partition(maxLeft, minRight, arr);
+        const pivot = partition(low, high, cmp, arr);
 
-        sort(maxLeft, iPivot - 1, arr);
-        sort(iPivot + 1, minRight, arr);
+        sort(low, pivot - 1, arr);
+        sort(pivot + 1, high, arr);
         return arr;
     }
 
@@ -84,61 +83,73 @@ function mutableQSortBy<T> (cmp: (a: T, b: T) => Ordering, arr: ReadonlyArray<T>
 
 /**
  * QSort algorithm with mutable array and Tail Call Optimization
+ * reference: https://www.geeksforgeeks.org/quicksort-tail-call-optimization-reducing-worst-case-space-log-n/
  */
 function mutableTOQSortBy<T> (cmp: (a: T, b: T) => Ordering, arr: ReadonlyArray<T>): ReadonlyArray<T> {
-    function swap(arr: Array<T>, i: number, j: number) {
-        const temp = arr[j];
-        arr[j] = arr[i];
-        arr[i] = temp;
-    }
-    function partition(maxLeft: number, minRight: number, arr: Array<T>): number {
-        let iPivot = maxLeft;
-        let iLeft = maxLeft;
-        let iRight = minRight;
 
-        while (iRight > iLeft) {
-            if (iPivot === iLeft) {
-                const comparison = cmp(arr[iPivot], arr[iRight]);
-                if (comparison === 'LT' || comparison === 'EQ') {
-                    iRight--;
-                } else {
-                    swap(arr, iPivot, iRight);
-                    iPivot = iRight;
-                }
-            } else {
-                const comparison = cmp(arr[iPivot], arr[iLeft]);
-                if (comparison === 'GT' || comparison === 'EQ') {
-                    iLeft++;
-                } else {
-                    swap(arr, iPivot, iLeft);
-                    iPivot = iLeft;
-                }
-            }
-        }
-        return iPivot;
-    }
-
-    function sort(maxLeft: number, minRight: number, arr: Array<T>): Array<T> {
-        let iLeft = maxLeft;
-        let iRight = minRight;
-        while (iLeft < iRight) {
-            const iPivot = partition(iLeft, minRight, arr);
+    function sort(low: number, high: number, arr: Array<T>): Array<T> {
+        while (low < high) {
+            const iPivot = partition(low, high, cmp, arr);
              // If left part is smaller, then recur for left
             // part and handle right part iteratively
-            if (iPivot - iLeft < iRight - iPivot) {
-                sort(iLeft, iPivot - 1, arr);
-                iLeft = iPivot + 1;
+            if (iPivot - low < high - iPivot) {
+                sort(low, iPivot - 1, arr);
+                low = iPivot + 1;
             }
             // Else recur for right part
             else {
-                sort(iPivot + 1, iRight, arr);
-                iRight = iPivot - 1;
+                sort(iPivot + 1, high, arr);
+                high = iPivot - 1;
             }
         }
         return arr;
 
     }
 
+    return sort(0, arr.length - 1, arr.slice(0));
+}
+
+/**
+ * ref: https://www.geeksforgeeks.org/iterative-quick-sort/
+ */
+function iterativeQSortBy <T> (cmp: (a: T, b: T) => Ordering, arr: ReadonlyArray<T>): ReadonlyArray<T> {
+    function sort(low: number, high: number, arr: Array<T>) {
+        // Create an auxiliary stack
+        const stack = new Array(high - low + 1);
+
+        // initialize top of stack
+        let top = -1;
+
+        // push initial values of l and h to stack
+        stack[ ++top ] = low;
+        stack[ ++top ] = high;
+
+        // Keep popping from stack while is not empty
+        while ( top >= 0 ) {
+            // Pop high and low
+            high = stack[ top-- ];
+            low = stack[ top-- ];
+
+            // Set pivot element at its correct position
+            // in sorted array
+            const pivot = partition(low, high, cmp, arr);
+
+            // If there are elements on left side of pivot,
+            // then push left side to stack
+            if ( pivot - 1 > low ) {
+                stack[ ++top ] = low;
+                stack[ ++top ] = pivot - 1;
+            }
+
+            // If there are elements on right side of pivot,
+            // then push right side to stack
+            if ( pivot + 1 < high ) {
+                stack[ ++top ] = pivot + 1;
+                stack[ ++top ] = high;
+            }
+        }
+        return arr;
+    }
     return sort(0, arr.length - 1, arr.slice(0));
 }
 
@@ -173,6 +184,23 @@ function createRandomArray(n: number) {
     return result;
 }
 
+function quickTest(arrayLength: number, sortFn: SortFunction<number>, cmpAsc: CmpFunction<number>) {
+    const randomArray = createRandomArray(arrayLength);
+    const sorted1 = sortFn(cmpAsc, randomArray);
+    const sorted2 = randomArray.sort((a, b) => a - b);
+    let eq = true;
+    for (let i = 0; i < sorted1.length; i ++) {
+        if (sorted1[i] !== sorted2[i]) {
+            eq = false;
+            break;
+        }
+    }
+    if (!eq) {
+        console.log('Arrays are diferent');
+        console.log('sortFn', sorted1);
+        console.log('native sort', sorted2);
+    }
+}
 
 function performanceTest(arrayLength: number, samples: number, name: string, sortFn: SortFunction<number>, cmp: CmpFunction<number>) {
     // perform the test many times (samples times) and get the average duration
