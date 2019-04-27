@@ -51,42 +51,41 @@ swap i j arr = do
 
 
 partition :: forall h a. Int -> Int -> (a -> a -> Ordering) -> STArray h a -> ST h Int
-partition low high cmp arr =
-  do
-    -- Select the pivot
-    pivot <- unsafePartial $ ArraySTP.peek high arr
+partition low high cmp arr = do
+  -- Select the pivot
+  pivot <- unsafePartial $ ArraySTP.peek high arr
 
-    -- Create mutable indexes
-    iRef <- Ref.new (low - 1)
-    jRef <- Ref.new low
+  -- Create mutable indexes
+  iRef <- Ref.new (low - 1)
+  jRef <- Ref.new low
 
-    while
-      -- while condition
-      do
+  while
+    -- while condition
+    do
+      j <- Ref.read jRef
+      pure $ j <= (high - 1)
+
+    -- while computation
+    $ do
         j <- Ref.read jRef
-        pure $ j <= (high - 1)
+        arrJ <- unsafePartial $ ArraySTP.peek j arr
+        comparison <- pure $ cmp arrJ pivot
+        -- If current element is smaller than or
+        -- equal to pivot
+        if (comparison == LT || comparison == EQ)
+          then do
+            -- increment index of smaller element and swap
+            i <- Ref.modify (add 1) iRef
+            swap i j arr
+          else pure unit
 
-      -- while computation
-      $ do
-          j <- Ref.read jRef
-          arrJ <- unsafePartial $ ArraySTP.peek j arr
-          comparison <- pure $ cmp arrJ pivot
-          -- If current element is smaller than or
-          -- equal to pivot
-          if (comparison == LT || comparison == EQ)
-            then do
-              -- increment index of smaller element and swap
-              i <- Ref.modify (add 1) iRef
-              swap i j arr
-            else pure unit
+        Ref.modify (add 1) jRef
 
-          Ref.modify (add 1) jRef
-
-    -- Finally swap the pivot
-    -- And return it's position
-    i <- Ref.read iRef
-    swap (i + 1) high arr
-    pure (i + 1)
+  -- Finally swap the pivot
+  -- And return it's position
+  i <- Ref.read iRef
+  swap (i + 1) high arr
+  pure (i + 1)
 
 foreign import length :: forall h a. STArray h a -> Int
 -- withArray :: forall h a b. (STArray h a -> ST h b) -> Array a -> ST h (Array a)

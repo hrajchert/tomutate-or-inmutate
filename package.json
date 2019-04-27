@@ -2,16 +2,22 @@
   "name": "tomutate-or-inmutate",
   "version": "0.0.0",
   "description": "",
-  "main": "index.js",
+  "main": "./dist/main.js",
   "directories": {
     "test": "test"
   },
   "scripts": {
+    "start": "node ./dist/main.js",
+    "build": "tsc && pulp build",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "",
   "license": "MIT",
   "dependencies": {
+    "@types/node": "^11.13.8",
+    "@types/pretty-ms": "^4.0.0",
+    "performance-now": "^2.1.0",
+    "pretty-ms": "^5.0.0",
     "typescript": "^3.4.5"
   }
 }
