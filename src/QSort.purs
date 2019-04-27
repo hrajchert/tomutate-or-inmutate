@@ -49,69 +49,70 @@ foreign import length :: forall h a. STArray h a -> Int
 -- WARNING ST.run with $ causes an error
 -- https://github.com/purescript/documentation/blob/master/errors/EscapedSkolem.md
 
+swap :: forall h a. Int -> Int -> STArray h a -> ST h Unit
+swap i j arr = do
+  -- Read both values
+  arrI <- unsafePartial $ ArraySTP.peek i arr
+  arrJ <- unsafePartial $ ArraySTP.peek j arr
+  -- And try to write the values in the other index
+  unsafePartial $ ArraySTP.poke j arrI arr
+  unsafePartial $ ArraySTP.poke i arrJ arr
+
+
+inc :: Int -> Int
+inc = add 1
+
+partition :: forall h a. Int -> Int -> (a -> a -> Ordering) -> STArray h a -> ST h Int
+partition low high cmp arr =
+  do
+    -- Select the pivot
+    pivot <- unsafePartial $ ArraySTP.peek high arr
+
+    -- Create mutable indexes
+    iRef <- Ref.new (low - 1)
+    jRef <- Ref.new low
+
+    while
+      -- while condition
+      do
+        j <- Ref.read jRef
+        pure $ j <= (high - 1)
+
+      -- while computation
+      $ do
+          j <- Ref.read jRef
+          arrJ <- unsafePartial $ ArraySTP.peek j arr
+          comparison <- pure $ cmp arrJ pivot
+
+          if (comparison == LT || comparison == EQ)
+            then do
+              i <- Ref.modify inc iRef
+              swap i j arr
+            else pure unit
+
+          Ref.modify inc jRef
+
+    i <- Ref.read iRef
+    swap (i + 1) high arr
+    pure (i + 1)
+
 mutableQSortBy :: forall a. (a -> a -> Ordering) -> Array a -> Array a
 mutableQSortBy cmp inmutableArr = run (withArray mutableComputation inmutableArr) where
 
   mutableComputation :: forall h. STArray h a -> ST h Unit
   mutableComputation arr = sort 0 (length arr - 1) where
-    swap :: Int -> Int -> ST h Unit
-    swap i j = do
-      -- Read both values
-      arrI <- unsafePartial $ ArraySTP.peek i arr
-      arrJ <- unsafePartial $ ArraySTP.peek j arr
-      -- And try to write the values in the other index
-      unsafePartial $ ArraySTP.poke j arrI arr
-      unsafePartial $ ArraySTP.poke i arrJ arr
-
-    dec :: Int -> Int
-    dec n = n - 1
-
-    inc :: Int -> Int
-    inc n = n + 1
 
     sort :: Int -> Int -> ST h Unit
     sort low high =
       if (low >= high)
         then pure unit
         else do
-          pivot <- partition low high
+          pivot <- partition low high cmp arr
           sort low (pivot - 1)
           sort (pivot + 1) high
           pure unit
 
-    partition :: Int -> Int -> ST h Int
-    partition low high =
-      do
-        -- Select the pivot
-        pivot <- unsafePartial $ ArraySTP.peek high arr
 
-        -- Create mutable indexes
-        iRef <- Ref.new (low - 1)
-        jRef <- Ref.new low
-
-        while
-          -- while condition
-          do
-            j <- Ref.read jRef
-            pure $ j <= (high - 1)
-
-          -- while computation
-          $ do
-              j <- Ref.read jRef
-              arrJ <- unsafePartial $ ArraySTP.peek j arr
-              comparison <- pure $ cmp arrJ pivot
-
-              if (comparison == LT || comparison == EQ)
-                then do
-                  i <- Ref.modify inc iRef
-                  swap i j
-                else pure unit
-
-              Ref.modify inc jRef
-
-        i <- Ref.read iRef
-        swap (i + 1) high
-        pure (i + 1)
 
 mutable1 :: Int
 mutable1 = run do
