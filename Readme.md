@@ -17,9 +17,12 @@ To run the performance test you need to use an environment that has the `perform
 ```
 const nativeSort = (cmp, arr) => arr.sort(cmp);
 const psMutableQSortBy = (cmp, arr) => PS["QSort"].mutableQSortBy(cmp)(arr);
+const psMutableTOQSortBy = (cmp, arr) => PS["QSort"].mutableTOQSortBy(cmp)(arr);
 const psQSortBy = (cmp, arr) => PS["QSort"].qsortBy(cmp)(arr);
 const psSortBy = (cmp, arr) => PS["Data.Array"].sortBy(cmp)(arr);
 
+
+performanceTest(100, 5000, "Native Sort", nativeSort, (a, b) => a - b);
 performanceTest(100, 5000, "TS Inmutable qsort", qsortBy, cmpNumberAsc);
 performanceTest(100, 5000, "TS Mutable qsort", mutableQSortBy, cmpNumberAsc);
 performanceTest(100, 5000, "TS Mutable qsort TO", mutableTOQSortBy, cmpNumberAsc);

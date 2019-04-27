@@ -39,15 +39,6 @@ qsortBy cmp xs = case uncons xs of
 
 
 
-foreign import length :: forall h a. STArray h a -> Int
--- withArray :: forall h a b. (STArray h a -> ST h b) -> Array a -> ST h (Array a)
-
--- mutableQSortBy cmpNumberAsc [3, 2, 4, 9, 7, 3]
--- mutableQSortBy cmp arr = sort 0 $ length arr - 1 $
--- withArray :: forall h a b. (STArray h a -> ST h b) -> Array a -> ST h (Array a)
--- peek :: forall h a. Int -> STArray h a -> ST h (Maybe a)
--- WARNING ST.run with $ causes an error
--- https://github.com/purescript/documentation/blob/master/errors/EscapedSkolem.md
 
 swap :: forall h a. Int -> Int -> STArray h a -> ST h Unit
 swap i j arr = do
@@ -58,9 +49,6 @@ swap i j arr = do
   unsafePartial $ ArraySTP.poke j arrI arr
   unsafePartial $ ArraySTP.poke i arrJ arr
 
-
-inc :: Int -> Int
-inc = add 1
 
 partition :: forall h a. Int -> Int -> (a -> a -> Ordering) -> STArray h a -> ST h Int
 partition low high cmp arr =
@@ -83,18 +71,32 @@ partition low high cmp arr =
           j <- Ref.read jRef
           arrJ <- unsafePartial $ ArraySTP.peek j arr
           comparison <- pure $ cmp arrJ pivot
-
+          -- If current element is smaller than or
+          -- equal to pivot
           if (comparison == LT || comparison == EQ)
             then do
-              i <- Ref.modify inc iRef
+              -- increment index of smaller element and swap
+              i <- Ref.modify (add 1) iRef
               swap i j arr
             else pure unit
 
-          Ref.modify inc jRef
+          Ref.modify (add 1) jRef
 
+    -- Finally swap the pivot
+    -- And return it's position
     i <- Ref.read iRef
     swap (i + 1) high arr
     pure (i + 1)
+
+foreign import length :: forall h a. STArray h a -> Int
+-- withArray :: forall h a b. (STArray h a -> ST h b) -> Array a -> ST h (Array a)
+
+-- mutableQSortBy cmpNumberAsc [3, 2, 4, 9, 7, 3]
+-- mutableQSortBy cmp arr = sort 0 $ length arr - 1 $
+-- withArray :: forall h a b. (STArray h a -> ST h b) -> Array a -> ST h (Array a)
+-- peek :: forall h a. Int -> STArray h a -> ST h (Maybe a)
+-- WARNING ST.run with $ causes an error
+-- https://github.com/purescript/documentation/blob/master/errors/EscapedSkolem.md
 
 mutableQSortBy :: forall a. (a -> a -> Ordering) -> Array a -> Array a
 mutableQSortBy cmp inmutableArr = run (withArray mutableComputation inmutableArr) where
@@ -112,7 +114,43 @@ mutableQSortBy cmp inmutableArr = run (withArray mutableComputation inmutableArr
           sort (pivot + 1) high
           pure unit
 
+mutableTOQSortBy :: forall a. (a -> a -> Ordering) -> Array a -> Array a
+mutableTOQSortBy cmp inmutableArr = run (withArray mutableComputation inmutableArr) where
 
+  mutableComputation :: forall h. STArray h a -> ST h Unit
+  mutableComputation arr = sort 0 (length arr - 1) where
+
+    sort :: Int -> Int -> ST h Unit
+    sort l h = do
+      -- Create mutable indexes
+      lowRef  <- Ref.new l
+      highRef <- Ref.new h
+
+      while
+        -- while condition
+        do
+          low  <- Ref.read lowRef
+          high <- Ref.read highRef
+          pure $ low < high
+
+        -- while computation
+        $ do
+          low  <- Ref.read lowRef
+          high <- Ref.read highRef
+          iPivot <- partition low high cmp arr
+
+          -- If left part is smaller, then recur for left
+          -- part and handle right part iteratively
+          if (iPivot - low < high - iPivot)
+            then do
+              sort low (iPivot - 1)
+              _ <- Ref.write (iPivot + 1) lowRef
+              pure unit
+            -- Else recur for right part
+            else do
+              sort (iPivot + 1) high
+              _ <- Ref.write (iPivot - 1) highRef
+              pure unit
 
 mutable1 :: Int
 mutable1 = run do
