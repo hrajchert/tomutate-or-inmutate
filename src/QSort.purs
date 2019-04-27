@@ -4,7 +4,7 @@ import Prelude
 import Control.Monad.ST (run, ST, for, while)
 import Control.Monad.ST.Ref (modify)
 import Control.Monad.ST.Ref as Ref
-import Data.Array.ST (STArray, withArray)
+import Data.Array.ST (STArray, withArray, empty)
 import Data.Array.ST.Partial as ArraySTP
 import Data.Array (filter, uncons)
 import Data.Maybe (Maybe(..))
@@ -151,6 +151,65 @@ mutableTOQSortBy cmp inmutableArr = run (withArray mutableComputation inmutableA
               sort (iPivot + 1) high
               _ <- Ref.write (iPivot - 1) highRef
               pure unit
+
+-- ref: https://www.geeksforgeeks.org/iterative-quick-sort/
+iterativeQSortBy :: forall a. (a -> a -> Ordering) -> Array a -> Array a
+iterativeQSortBy cmp inmutableArr = run (withArray mutableComputation inmutableArr) where
+
+  mutableComputation :: forall h. STArray h a -> ST h Unit
+  mutableComputation arr = sort 0 (length arr - 1) where
+
+    sort :: Int -> Int -> ST h Unit
+    sort low high = do
+      -- Create an auxiliary stack
+      stack <- empty
+
+      -- initialize top of stack
+      topRef  <- Ref.new 1
+
+      -- push initial values of low and high to stack
+      unsafePartial $ ArraySTP.poke 0 low stack
+      unsafePartial $ ArraySTP.poke 1 high stack
+
+      -- Keep popping from stack while is not empty
+      while
+        -- while condition
+        do
+          top  <- Ref.read topRef
+          pure $ top >= 0
+
+        -- while computation
+        $ do
+          -- Pop high and low
+          top   <- Ref.read topRef
+          high' <- unsafePartial $ ArraySTP.peek top stack
+          low'  <- unsafePartial $ ArraySTP.peek (top - 1) stack
+          top'  <- modify (\t -> t - 2) topRef
+
+          -- Set pivot element at its correct position
+          -- in sorted array
+          iPivot <- partition low' high' cmp arr
+
+          -- If there are elements on left side of pivot,
+          -- then push left side to stack
+          top'' <- if ( iPivot - 1 > low' )
+                    then do
+                      unsafePartial $ ArraySTP.poke (top' + 1) low stack
+                      unsafePartial $ ArraySTP.poke (top' + 2) (iPivot - 1) stack
+                      modify (\t -> t + 2) topRef
+                    else pure top'
+
+          -- If there are elements on right side of pivot,
+          -- then push right side to stack
+          if ( iPivot + 1 < high' )
+            then do
+              unsafePartial $ ArraySTP.poke (top' + 1) (iPivot + 1) stack
+              unsafePartial $ ArraySTP.poke (top' + 2) high stack
+              _ <- modify (\t -> t + 2) topRef
+              pure unit
+            else pure unit
+
+
 
 mutable1 :: Int
 mutable1 = run do

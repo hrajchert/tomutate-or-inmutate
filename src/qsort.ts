@@ -120,7 +120,7 @@ function iterativeQSortBy <T> (cmp: (a: T, b: T) => Ordering, arr: ReadonlyArray
         // initialize top of stack
         let top = -1;
 
-        // push initial values of l and h to stack
+        // push initial values of low and high to stack
         stack[ ++top ] = low;
         stack[ ++top ] = high;
 
