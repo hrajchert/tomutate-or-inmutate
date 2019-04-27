@@ -90,7 +90,7 @@ function mutableTOQSortBy<T> (cmp: (a: T, b: T) => Ordering, arr: ReadonlyArray<
     function sort(low: number, high: number, arr: Array<T>): Array<T> {
         while (low < high) {
             const iPivot = partition(low, high, cmp, arr);
-             // If left part is smaller, then recur for left
+            // If left part is smaller, then recur for left
             // part and handle right part iteratively
             if (iPivot - low < high - iPivot) {
                 sort(low, iPivot - 1, arr);
@@ -202,6 +202,23 @@ function quickTest(arrayLength: number, sortFn: SortFunction<number>, cmpAsc: Cm
     }
 }
 
+function beep() {
+    const vol = 999;
+    const freq = 220;
+    const duration = 300;
+    const ctx = new AudioContext();
+
+    const osc = ctx.createOscillator();
+    const u = ctx.createGain();
+    osc.connect(u);
+    osc.frequency.value=freq
+    osc.type="square"
+    u.connect(ctx.destination)
+    u.gain.value=vol*0.01
+    osc.start(ctx.currentTime)
+    osc.stop(ctx.currentTime+duration*0.001)
+}
+
 function performanceTest(arrayLength: number, samples: number, name: string, sortFn: SortFunction<number>, cmp: CmpFunction<number>) {
     // perform the test many times (samples times) and get the average duration
     function getAvgDuration(startMark: string, endMark: string) {
@@ -231,4 +248,5 @@ function performanceTest(arrayLength: number, samples: number, name: string, sor
 
     performance.clearMarks();
     performance.clearMeasures();
+    beep();
 }
