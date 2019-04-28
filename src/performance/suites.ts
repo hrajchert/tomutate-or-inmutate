@@ -4,19 +4,15 @@ const PS = {
     "Data.Array": require('../../output/Data.Array'),
     "QSort": require('../../output/QSort')
 };
-// const psMutableQSortBy = (cmp, arr) => PS["QSort"].mutableQSortBy(cmp)(arr);
-// const psMutableTOQSortBy = (cmp, arr) => PS["QSort"].mutableTOQSortBy(cmp)(arr);
-// const psQSortBy = (cmp, arr) => PS["QSort"].qsortBy(cmp)(arr);
+// const psMutableQSortBy = ;
+// const psMutableTOQSortBy = ;
 
 
 
-// performanceTest(100, 5000, "Native Sort", nativeSort, ;
-// performanceTest(100, 5000, "TS Inmutable qsort", qsortBy, cmpNumberAsc);
-// performanceTest(100, 5000, "TS Mutable qsort", mutableQSortBy, cmpNumberAsc);
-// performanceTest(100, 5000, "TS Mutable qsort TO", mutableTOQSortBy, cmpNumberAsc);
+// performanceTest(100, 5000, "", mutableQSortBy, cmpNumberAsc);
+// performanceTest(100, 5000, "", mutableTOQSortBy, cmpNumberAsc);
 // performanceTest(100, 5000, "PS sortBy", psSortBy, PS["QSort"].cmpNumberAsc);
 // performanceTest(100, 5000, "PS Mutable qsort", psMutableQSortBy, PS["QSort"].cmpNumberAsc);
-// performanceTest(100, 5000, "PS Inmutable qsort", psQSortBy, PS["QSort"].cmpNumberAsc);
 export const suites = {
     TS: {
         nativeSort: {
@@ -32,7 +28,67 @@ export const suites = {
                 [5000000,  1000],   // avg = 1446.6268290499997ms :: total time = 26m 35.6s
                 [10000000, 500]
             ]
-        } as PerformanceSuite
+        } as PerformanceSuite,
+        qsortBy: {
+            name: 'TS Inmutable qsort',
+            sortFn: TSQSort.qsortBy,
+            cmp: TSQSort.cmpNumberAsc,
+            tests: [
+                [100,      1],
+                // [100,      500000],
+                // [1000,     50000],
+                // [10000,    10000],
+                // [50000,    5000],
+                // [100000,   2500],
+                // [5000000,  1000],
+                // [10000000, 500]
+            ]
+        } as PerformanceSuite,
+        mutableQSortBy: {
+            name: 'TS Mutable qsort',
+            sortFn: TSQSort.mutableQSortBy,
+            cmp: TSQSort.cmpNumberAsc,
+            tests: [
+                [100,      1],
+                // [100,      500000],
+                // [1000,     50000],
+                // [10000,    10000],
+                // [50000,    5000],
+                // [100000,   2500],
+                // [5000000,  1000],
+                // [10000000, 500]
+            ]
+        } as PerformanceSuite,
+        mutableTOQSortBy: {
+            name: 'TS Mutable qsort TO',
+            sortFn: TSQSort.mutableTOQSortBy,
+            cmp: TSQSort.cmpNumberAsc,
+            tests: [
+                [100,      1],
+                // [100,      500000],
+                // [1000,     50000],
+                // [10000,    10000],
+                // [50000,    5000],
+                // [100000,   2500],
+                // [5000000,  1000],
+                // [10000000, 500]
+            ]
+        } as PerformanceSuite,
+        iterativeQSortBy: {
+            name: 'TS Iterative Mutable qsort',
+            sortFn: TSQSort.iterativeQSortBy,
+            cmp: TSQSort.cmpNumberAsc,
+            tests: [
+                [100,      1],
+                // [100,      500000],
+                // [1000,     50000],
+                // [10000,    10000],
+                // [50000,    5000],
+                // [100000,   2500],
+                // [5000000,  1000],
+                // [10000000, 500]
+            ]
+        } as PerformanceSuite,
     },
     PS: {
         sortBy: {
@@ -48,7 +104,68 @@ export const suites = {
                 [5000000,  1000],
                 [10000000, 500]
             ]
-        } as PerformanceSuite
+        } as PerformanceSuite,
+        qsortBy: {
+            name: 'PS Inmutable qsort',
+            sortFn: (cmp, arr) => PS["QSort"].qsortBy(cmp)(arr),
+            cmp: PS["QSort"].cmpNumberAsc,
+            tests: [
+                [100,      1],
+                // [100,      500000],
+                // [1000,     50000],
+                // [10000,    10000],
+                // [50000,    5000],
+                // [100000,   2500],
+                // [5000000,  1000],
+                // [10000000, 500]
+            ]
+        } as PerformanceSuite,
+        mutableQSortBy: {
+            name: 'PS Mutable qsort',
+            sortFn: (cmp, arr) => PS["QSort"].mutableQSortBy(cmp)(arr),
+            cmp: PS["QSort"].cmpNumberAsc,
+            tests: [
+                [100,      1],
+                // [100,      500000],
+                // [1000,     50000],
+                // [10000,    10000],
+                // [50000,    5000],
+                // [100000,   2500],
+                // [5000000,  1000],
+                // [10000000, 500]
+            ]
+        } as PerformanceSuite,
+        mutableTOQSortBy: {
+            name: 'PS Mutable qsort TO',
+            sortFn: (cmp, arr) => PS["QSort"].mutableTOQSortBy(cmp)(arr),
+            cmp: PS["QSort"].cmpNumberAsc,
+            tests: [
+                [100,      1],
+                // [100,      500000],
+                // [1000,     50000],
+                // [10000,    10000],
+                // [50000,    5000],
+                // [100000,   2500],
+                // [5000000,  1000],
+                // [10000000, 500]
+            ]
+        } as PerformanceSuite,
+        iterativeQSortBy: {
+            name: 'PS Iterative qsort',
+            sortFn: (cmp, arr) => PS["QSort"].iterativeQSortBy(cmp)(arr),
+            cmp: PS["QSort"].cmpNumberAsc,
+            tests: [
+                [100,      1],
+                // [100,      500000],
+                // [1000,     50000],
+                // [10000,    10000],
+                // [50000,    5000],
+                // [100000,   2500],
+                // [5000000,  1000],
+                // [10000000, 500]
+            ]
+        } as PerformanceSuite,
+
     }
 }
 
