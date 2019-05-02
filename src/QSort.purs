@@ -57,29 +57,21 @@ partition low high cmp arr = do
 
   -- Create mutable indexes
   iRef <- Ref.new (low - 1)
-  jRef <- Ref.new low
 
-  while
-    -- while condition
+  for low high (\j ->
     do
-      j <- Ref.read jRef
-      pure $ j <= (high - 1)
+      arrJ <- unsafePartial $ ArraySTP.peek j arr
+      comparison <- pure $ cmp arrJ pivot
+      -- If current element is smaller than or
+      -- equal to pivot
+      if (comparison == LT || comparison == EQ)
+        then do
+          -- increment index of smaller element and swap
+          i <- Ref.modify (add 1) iRef
+          swap i j arr
+        else pure unit
+  )
 
-    -- while computation
-    $ do
-        j <- Ref.read jRef
-        arrJ <- unsafePartial $ ArraySTP.peek j arr
-        comparison <- pure $ cmp arrJ pivot
-        -- If current element is smaller than or
-        -- equal to pivot
-        if (comparison == LT || comparison == EQ)
-          then do
-            -- increment index of smaller element and swap
-            i <- Ref.modify (add 1) iRef
-            swap i j arr
-          else pure unit
-
-        Ref.modify (add 1) jRef
 
   -- Finally swap the pivot
   -- And return it's position
