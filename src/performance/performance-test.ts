@@ -8,7 +8,7 @@ type SortFunction <T>= (cmp: (a: T, b: T) => Ordering, arr: ReadonlyArray<T>) =>
 
 type Measure = ReturnType<typeof time>;
 
-function time<T>(fn: () => T) {
+export function time<T>(fn: () => T) {
     const start = now();
     const result = fn();
 
