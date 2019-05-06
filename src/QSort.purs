@@ -2,7 +2,6 @@ module QSort where
 import Prelude
 
 import Control.Monad.ST (run, ST, for, while)
-import Control.Monad.ST.Ref (modify)
 import Control.Monad.ST.Ref as Ref
 import Data.Array.ST (STArray, withArray, empty)
 import Data.Array.ST.Partial as ArraySTP
@@ -175,7 +174,7 @@ iterativeQSortBy cmp inmutableArr = run (withArray mutableComputation inmutableA
           top   <- Ref.read topRef
           high' <- unsafePartial $ ArraySTP.peek top stack
           low'  <- unsafePartial $ ArraySTP.peek (top - 1) stack
-          top'  <- modify (\t -> t - 2) topRef
+          top'  <- Ref.modify (\t -> t - 2) topRef
 
           -- Set pivot element at its correct position
           -- in sorted array
@@ -187,7 +186,7 @@ iterativeQSortBy cmp inmutableArr = run (withArray mutableComputation inmutableA
                     then do
                       unsafePartial $ ArraySTP.poke (top' + 1) low stack
                       unsafePartial $ ArraySTP.poke (top' + 2) (iPivot - 1) stack
-                      modify (\t -> t + 2) topRef
+                      Ref.modify (\t -> t + 2) topRef
                     else pure top'
 
           -- If there are elements on right side of pivot,
@@ -196,7 +195,7 @@ iterativeQSortBy cmp inmutableArr = run (withArray mutableComputation inmutableA
             then do
               unsafePartial $ ArraySTP.poke (top' + 1) (iPivot + 1) stack
               unsafePartial $ ArraySTP.poke (top' + 2) high stack
-              _ <- modify (\t -> t + 2) topRef
+              _ <- Ref.modify (\t -> t + 2) topRef
               pure unit
             else pure unit
 
@@ -211,11 +210,17 @@ mutable1 = run do
     -- ST r Int
     Ref.write (val + 2) ref
 
-
-mutable2 :: String
+mutable2 :: Int
 mutable2 = run do
+    ref <- Ref.new 0
+    Ref.modify (\val -> val + 2) ref
+
+mutable3 :: String
+mutable3 = run do
     ref <- Ref.new ""
-    for 0 5 (\i -> Ref.write (show i) ref)
+    for 0 5 (\i ->
+      Ref.modify (\val -> val <> show i) ref
+    )
     Ref.read ref
 
 
@@ -234,7 +239,7 @@ mutable' = run do
       pure $ r > l
 
     -- computation
-    $ modify (add 1) left
+    $ Ref.modify (add 1) left
 
   Ref.read left
 
@@ -249,7 +254,7 @@ mutable'' = run do
     ((>) <$> Ref.read right <*> Ref.read left)
 
     -- computation
-    $ modify (add 1) left
+    $ Ref.modify (add 1) left
 
   Ref.read left
 
