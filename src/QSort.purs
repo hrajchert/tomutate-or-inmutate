@@ -54,7 +54,7 @@ partition low high cmp arr = do
   -- Select the pivot
   pivot <- unsafePartial $ ArraySTP.peek high arr
 
-  -- Create mutable indexes
+  -- Create a mutable reference to the smaller item
   iRef <- Ref.new (low - 1)
 
   for low high (\j ->
@@ -71,11 +71,10 @@ partition low high cmp arr = do
         else pure unit
   )
 
-
   -- Finally swap the pivot
-  -- And return it's position
   i <- Ref.read iRef
   swap (i + 1) high arr
+  -- And return it's position
   pure (i + 1)
 
 foreign import length :: forall h a. STArray h a -> Int

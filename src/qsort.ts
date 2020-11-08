@@ -59,6 +59,7 @@ function swap<T>(i: number, j: number, arr: Array<T>) {
 function partition<T>(low: number, high: number, cmp: (a: T, b: T) => Ordering, arr: Array<T>): number {
     // Select the pivot
     const pivot = arr[high];
+    // Create a mutable reference to the smaller item
     let i = low - 1;
 
     for (let j = low; j <= high - 1; j++) {
